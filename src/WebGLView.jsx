@@ -56,7 +56,7 @@ function WebGLView() {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
-  function drawScene(gl, programInfo, buffers, algoInfo) {
+  function drawScene(gl, programInfo, buffers, plotStatus) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
@@ -86,17 +86,15 @@ function WebGLView() {
       modelViewMatrix,
     );
 
-    gl.uniform1f(programInfo.uniforms.uX1Min, algoInfo.x1Min);
-    gl.uniform1f(programInfo.uniforms.uX1Max, algoInfo.x1Max);
-    gl.uniform1f(programInfo.uniforms.uX2Min, algoInfo.x2Min);
-    gl.uniform1f(programInfo.uniforms.uX2Max, algoInfo.x2Max);
+    gl.uniform1f(programInfo.uniforms.uX1Min, plotStatus.x1Min);
+    gl.uniform1f(programInfo.uniforms.uX1Max, plotStatus.x1Max);
+    gl.uniform1f(programInfo.uniforms.uX2Min, plotStatus.x2Min);
+    gl.uniform1f(programInfo.uniforms.uX2Max, plotStatus.x2Max);
 
-    gl.uniform1f(programInfo.uniforms.uA1, algoInfo.a1);
-    gl.uniform1f(programInfo.uniforms.uA2, algoInfo.a2);
-    gl.uniform1f(programInfo.uniforms.uB1, algoInfo.b1);
-    gl.uniform1f(programInfo.uniforms.uB2, algoInfo.b2);
-    gl.uniform1f(programInfo.uniforms.uC1, algoInfo.c1);
-    gl.uniform1f(programInfo.uniforms.uC2, algoInfo.c2);
+    gl.uniform2f(programInfo.uniforms.uCoefficients0, plotStatus.coefficients[0][0], plotStatus.coefficients[0][1]);
+    gl.uniform2f(programInfo.uniforms.uCoefficients1, plotStatus.coefficients[1][0], plotStatus.coefficients[1][1]);
+    gl.uniform2f(programInfo.uniforms.uCoefficients2, plotStatus.coefficients[2][0], plotStatus.coefficients[2][1]);
+    gl.uniform2f(programInfo.uniforms.uCoefficients3, plotStatus.coefficients[3][0], plotStatus.coefficients[3][1]);
 
     {
       const offset = 0;
@@ -135,35 +133,33 @@ function WebGLView() {
         uX1Max: gl.getUniformLocation(shaderProgram, "uX1Max"),
         uX2Min: gl.getUniformLocation(shaderProgram, "uX2Min"),
         uX2Max: gl.getUniformLocation(shaderProgram, "uX2Max"),
-        uA1: gl.getUniformLocation(shaderProgram, "uA1"),
-        uA2: gl.getUniformLocation(shaderProgram, "uA2"),
-        uB1: gl.getUniformLocation(shaderProgram, "uB1"),
-        uB2: gl.getUniformLocation(shaderProgram, "uB2"),
-        uC1: gl.getUniformLocation(shaderProgram, "uC1"),
-        uC2: gl.getUniformLocation(shaderProgram, "uC2"),
+        uCoefficients0: gl.getUniformLocation(shaderProgram, "uCoefficients[0]"),
+        uCoefficients1: gl.getUniformLocation(shaderProgram, "uCoefficients[1]"),
+        uCoefficients2: gl.getUniformLocation(shaderProgram, "uCoefficients[2]"),
+        uCoefficients3: gl.getUniformLocation(shaderProgram, "uCoefficients[3]"),
       }
     };
 
     const buffers = initBuffers(gl);
 
-    let algoInfo = {
-      x1Min: -10,
-      x1Max: 10,
-      x2Min: -10,
-      x2Max: 10,
-      a1: 1.0,
-      a2: 0.0,
-      b1: 0.0,
-      b2: 0.0,
-      c1: 25.0,
-      c2: 0.0,
+    let plotStatus = {
+      x1Min: -1,
+      x1Max: 1,
+      x2Min: -1,
+      x2Max: 1,
+      coefficients: [
+        [0.0, 0.0],
+        [0.0, 0.0],
+        [0.0, 0.0],
+        [1.0, 0.0],
+      ],
     };
 
     function render(time) {
-      algoInfo.c1 = Math.sin(time * 0.002) * 50;
-      algoInfo.c2 = Math.cos(time * 0.002) * 50;
+      plotStatus.coefficients[0][0] = Math.sin(time * 0.002) * Math.pow(0.8, 3);
+      plotStatus.coefficients[0][1] = Math.cos(time * 0.002) * Math.pow(0.8, 3);
 
-      drawScene(gl, programInfo, buffers, algoInfo);
+      drawScene(gl, programInfo, buffers, plotStatus);
 
       requestAnimationFrame(render);
     }

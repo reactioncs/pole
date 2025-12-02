@@ -12,12 +12,7 @@ uniform float uX1Max;
 uniform float uX2Min;
 uniform float uX2Max;
 
-uniform float uA1;
-uniform float uA2;
-uniform float uB1;
-uniform float uB2;
-uniform float uC1;
-uniform float uC2;
+uniform vec2 uCoefficients[4];
 
 // Helper function for hue2rgb
 float hue2rgb(float p, float q, float t) {
@@ -49,16 +44,26 @@ vec3 hsl2rgb(vec3 hsl) {
     return rgb;
 }
 
+vec2 complexMultiply(vec2 u, vec2 v) {
+    return vec2(u.x * v.x - u.y * v.y, u.x * v.y + u.y * v.x);
+}
+
 void main() {
-    float x1 = (uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max;
-    float x2 = (uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max;
+    vec2 x = vec2(
+        (uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max, 
+        (uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max
+    );
 
-    // ax^2 + bx + c
-    float Re = uA1 * x1 * x1 - uA1 * x2 * x2 - 2.0 * uA2 * x1 * x2 + uB1 * x1 - uB2 * x2 + uC1;
-    float Im = uA2 * x1 * x1 - uA2 * x2 * x2 + 2.0 * uA1 * x1 * x2 + uB1 * x2 + uB2 * x1 + uC2;
+    vec2 xi = vec2(1.0);
+    vec2 y = vec2(0.0);
+    for (int i = 0; i < uCoefficients.length(); i++)
+    {
+        y += complexMultiply(uCoefficients[i], xi);
+        xi = complexMultiply(xi, x);
+    }
 
-    float L = 1.0 / (length(vec2(Re, Im)) + 1.0);
-    float H = (atan(Im, Re) * 180.0 / PI + 180.0) / 360.0;
+    float L = exp(-10.0 * length(y)) * 0.95 + 0.05;
+    float H = (atan(y.y, y.x) * 180.0 / PI + 180.0) / 360.0;
     float S = 1.0;
 
     fragColor = vec4(hsl2rgb(vec3(H, S, L)), 1.0);

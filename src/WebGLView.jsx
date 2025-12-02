@@ -1,60 +1,12 @@
 import { useEffect, useRef } from "react";
 
+import { mat4 } from "gl-matrix";
+import { initShaderProgram } from "./glHelper";
 import vsSource from "./shaders/vertex.glsl?raw";
 import fsSource from "./shaders/fragment.glsl?raw";
-import { mat4 } from "gl-matrix";
 
 function WebGLView() {
   const canvasRef = useRef(null);
-
-  //
-  // Initialize a shader program, so WebGL knows how to draw our data
-  //
-  function initShaderProgram(gl, vsSource, fsSource) {
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-    // Create the shader program
-    const shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    // If creating the shader program failed, alert
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.error(`Unable to initialize the shader program: ${gl.getProgramInfoLog(shaderProgram)}`);
-      return null;
-    }
-
-    return shaderProgram;
-  }
-
-  //
-  // creates a shader of the given type, uploads the source and
-  // compiles it.
-  //
-  function loadShader(gl, type, source) {
-    const shader = gl.createShader(type);
-
-    // Send the source to the shader object
-
-    gl.shaderSource(shader, source);
-
-    // Compile the shader program
-
-    gl.compileShader(shader);
-
-    // See if it compiled successfully
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error(`An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`);
-      gl.deleteShader(shader);
-      return null;
-    }
-
-    return shader;
-  }
 
   function initBuffers(gl) {
     const positionBuffer = initPositionBuffer(gl);
@@ -83,40 +35,40 @@ function WebGLView() {
     return positionBuffer;
   }
 
-  function drawScene(gl, programInfo, buffers, time, algoInfo) {
+  // Tell WebGL how to pull out the positions from the position
+  // buffer into the vertexPosition attribute.
+  function setPositionAttribute(gl, buffers, programInfo) {
+    const numComponents = 2; // pull out 2 values per iteration
+    const type = gl.FLOAT; // the data in the buffer is 32bit floats
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set of values to the next
+    // 0 = use type and numComponents above
+    const offset = 0; // how many bytes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexPosition,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset,
+    );
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+  }
+
+  function drawScene(gl, programInfo, buffers, algoInfo) {
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
 
     // Clear the canvas before we start drawing on it.
-
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    // const fieldOfView = (45 * Math.PI) / 180; // in radians
-    // const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    // const zNear = 0.1;
-    // const zFar = -0.1;
     const projectionMatrix = mat4.create();
 
-    // note: glMatrix always has the first argument
-    // as the destination to receive the result.
-    // mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
-    // Set the drawing position to the "identity" point, which is
-    // the center of the scene.
     const modelViewMatrix = mat4.create();
 
-    // Now move the drawing position a bit to where we want to
-    // start drawing the square.
-    // mat4.translate(
-    //   modelViewMatrix, // destination matrix
-    //   modelViewMatrix, // matrix to translate
-    //   [-0.0, 0.0, -6.0],
-    // ); // amount to translate
-
-    // Tell WebGL how to pull out the positions from the position
-    // buffer into the vertexPosition attribute.
     setPositionAttribute(gl, buffers, programInfo);
 
     // Tell WebGL to use our program when drawing
@@ -138,7 +90,7 @@ function WebGLView() {
     gl.uniform1f(programInfo.uniforms.uX1Max, algoInfo.x1Max);
     gl.uniform1f(programInfo.uniforms.uX2Min, algoInfo.x2Min);
     gl.uniform1f(programInfo.uniforms.uX2Max, algoInfo.x2Max);
-    
+
     gl.uniform1f(programInfo.uniforms.uA1, algoInfo.a1);
     gl.uniform1f(programInfo.uniforms.uA2, algoInfo.a2);
     gl.uniform1f(programInfo.uniforms.uB1, algoInfo.b1);
@@ -151,27 +103,6 @@ function WebGLView() {
       const vertexCount = 4;
       gl.drawArrays(gl.TRIANGLE_STRIP, offset, vertexCount);
     }
-  }
-
-  // Tell WebGL how to pull out the positions from the position
-  // buffer into the vertexPosition attribute.
-  function setPositionAttribute(gl, buffers, programInfo) {
-    const numComponents = 2; // pull out 2 values per iteration
-    const type = gl.FLOAT; // the data in the buffer is 32bit floats
-    const normalize = false; // don't normalize
-    const stride = 0; // how many bytes to get from one set of values to the next
-    // 0 = use type and numComponents above
-    const offset = 0; // how many bytes inside the buffer to start from
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-    gl.vertexAttribPointer(
-      programInfo.attribLocations.vertexPosition,
-      numComponents,
-      type,
-      normalize,
-      stride,
-      offset,
-    );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
   function initComponent() {
@@ -232,7 +163,7 @@ function WebGLView() {
       algoInfo.c1 = Math.sin(time * 0.002) * 50;
       algoInfo.c2 = Math.cos(time * 0.002) * 50;
 
-      drawScene(gl, programInfo, buffers, time, algoInfo);
+      drawScene(gl, programInfo, buffers, algoInfo);
 
       requestAnimationFrame(render);
     }

@@ -53,10 +53,11 @@ void main() {
     float x1 = (uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max;
     float x2 = (uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max;
 
+    // ax^2 + bx + c
     float Re = uA1 * x1 * x1 - uA1 * x2 * x2 - 2.0 * uA2 * x1 * x2 + uB1 * x1 - uB2 * x2 + uC1;
     float Im = uA2 * x1 * x1 - uA2 * x2 * x2 + 2.0 * uA1 * x1 * x2 + uB1 * x2 + uB2 * x1 + uC2;
 
-    float L = 1.0 / (sqrt(Re * Re + Im * Im) + 1.0);
+    float L = 1.0 / (length(vec2(Re, Im)) + 1.0);
     float H = (atan(Im, Re) * 180.0 / PI + 180.0) / 360.0;
     float S = 1.0;
 

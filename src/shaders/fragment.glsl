@@ -50,8 +50,8 @@ vec2 complexMultiply(vec2 u, vec2 v) {
 
 void main() {
     vec2 x = vec2(
-        (uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max, 
-        (uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max
+        ((uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max) / 2.0, 
+        ((uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max) / 2.0
     );
 
     vec2 xi = vec2(1.0);

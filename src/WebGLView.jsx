@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 
-import { mat4 } from "gl-matrix";
 import { initShaderProgram } from "./glHelper";
 import vsSource from "./shaders/vertex.glsl?raw";
 import fsSource from "./shaders/fragment.glsl?raw";
@@ -116,26 +115,10 @@ function WebGLView() {
     // Clear the canvas before we start drawing on it.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const projectionMatrix = mat4.create();
-
-    const modelViewMatrix = mat4.create();
-
     setPositionAttribute(gl, buffers, programInfo);
 
     // Tell WebGL to use our program when drawing
     gl.useProgram(programInfo.program);
-
-    // Set the shader uniforms
-    gl.uniformMatrix4fv(
-      programInfo.uniformLocations.projectionMatrix,
-      false,
-      projectionMatrix,
-    );
-    gl.uniformMatrix4fv(
-      programInfo.uniformLocations.modelViewMatrix,
-      false,
-      modelViewMatrix,
-    );
 
     gl.uniform1f(programInfo.uniforms.uX1Min, plotStatus.x1Min);
     gl.uniform1f(programInfo.uniforms.uX1Max, plotStatus.x1Max);

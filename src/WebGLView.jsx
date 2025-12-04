@@ -4,50 +4,19 @@ import { initShaderProgram } from "./glHelper";
 import vsSource from "./shaders/vertex.glsl?raw";
 import fsSource from "./shaders/fragment.glsl?raw";
 
-function WebGLView() {
-  const glCanvasRef = useRef(null);
+function WebGLView({ plotStatus }) {
+  const plotStatusRef = useRef(plotStatus);
+
+  const canvasRef = useRef(null);
   const glObjectsRef = useRef(null);
 
-  const shapeCanvasRef = useRef(null);
-  const shapeObjectsRef = useRef(null);
-
-  const plotStatusRef = useRef({
-    x1Min: -1.0,
-    x1Max: 1.0,
-    x2Min: -1.0,
-    x2Max: 1.0,
-    coefficients: [
-      [0.0, 0.0],
-      [0.0, 0.0],
-      [0.0, 0.0],
-      [1.0, 0.0],
-    ],
-  });
-
   function resize() {
-    {
-      if (!shapeCanvasRef.current) throw new Error();
-      const canvas = shapeCanvasRef.current;
-      const canvasWidth = canvas.clientWidth;
-      const canvasHeight = canvas.clientHeight;
-      const dpr = window.devicePixelRatio || 2
-      canvas.width = canvasWidth * dpr;
-      canvas.height = canvasHeight * dpr;
-    }
-    {
-      if (!glCanvasRef.current) throw new Error();
-      const canvas = glCanvasRef.current;
-      const canvasWidth = canvas.clientWidth;
-      const canvasHeight = canvas.clientHeight;
-      const dpr = window.devicePixelRatio || 2
-      canvas.width = canvasWidth * dpr;
-      canvas.height = canvasHeight * dpr;
+    if (!canvasRef.current) throw new Error();
+    const canvas = canvasRef.current;
 
-      plotStatusRef.current.x1Min = -canvasWidth / 500.0;
-      plotStatusRef.current.x1Max = canvasWidth / 500.0;
-      plotStatusRef.current.x2Min = -canvasHeight / 500.0;
-      plotStatusRef.current.x2Max = canvasHeight / 500.0;
-    }
+    const dpr = window.devicePixelRatio || 2
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
   }
 
   function initBuffers(gl) {
@@ -98,11 +67,12 @@ function WebGLView() {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
-  function drawGl() {
+  function draw() {
     if (!glObjectsRef.current) throw new Error();
     const gl = glObjectsRef.current.gl;
     const programInfo = glObjectsRef.current.programInfo;
     const buffers = glObjectsRef.current.buffers;
+
     const plotStatus = plotStatusRef.current;
 
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -137,9 +107,9 @@ function WebGLView() {
     }
   }
 
-  function initGl() {
-    if (!glCanvasRef.current) throw new Error();
-    const canvas = glCanvasRef.current;
+  function init() {
+    if (!canvasRef.current) throw new Error();
+    const canvas = canvasRef.current;
 
     // Initialize the GL context
     /** @type {WebGL2RenderingContext} */
@@ -174,79 +144,26 @@ function WebGLView() {
     glObjectsRef.current = { gl, programInfo, buffers };
   }
 
-  function initShapes() {
-    if (!shapeCanvasRef.current) throw new Error();
-    const canvas = shapeCanvasRef.current;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("ctx is null");
-
-    shapeObjectsRef.current = { ctx };
-  }
-
-  function drawShapes() {
-    if (!shapeCanvasRef.current || !shapeObjectsRef.current) throw new Error();
-    const canvas = shapeCanvasRef.current;
-    const ctx = shapeObjectsRef.current.ctx;
-    const plotStatus = plotStatusRef.current;
-
-    ctx.resetTransform();
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    for (let i = 0; i < plotStatus.coefficients.length; i++) {
-      const x = canvas.width / (plotStatus.x1Max - plotStatus.x1Min) * (plotStatus.coefficients[i][0] - plotStatus.x1Min);
-      const y = canvas.height / (plotStatus.x2Min - plotStatus.x2Max) * (plotStatus.coefficients[i][1] - plotStatus.x2Max);
-
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "white";
-      ctx.beginPath();
-      ctx.arc(x, y, 12, 0, 2 * Math.PI);
-      ctx.stroke();
-
-      ctx.font = "italic 35px Times New Roman, Serif";
-      ctx.fillStyle = "white";
-      ctx.fillText(String.fromCharCode(plotStatus.coefficients.length - i - 1 + 97), x - 8, y + 45);
-    }
-  }
-
-  function init() {
+  useEffect(() => {
     resize();
-    initGl();
-    initShapes();
+    init();
 
     const observer = new ResizeObserver(() => {
       resize();
-      drawShapes();
-      drawGl();
+      draw();
     });
-    observer.observe(glCanvasRef.current);
+    observer.observe(canvasRef.current);
 
-    function render(time) {
-      plotStatusRef.current.coefficients[0][0] = Math.cos(time * 0.0015) * 1.0;
-      plotStatusRef.current.coefficients[0][1] = Math.sin(time * 0.0015) * 1.0;
-      plotStatusRef.current.coefficients[1][0] = Math.cos(-time * 0.002) * 0.6;
-      plotStatusRef.current.coefficients[1][1] = Math.sin(-time * 0.002) * 0.6;
-
-      drawShapes();
-      drawGl();
-
+    function render() {
+      draw();
       requestAnimationFrame(render);
     }
     requestAnimationFrame(render);
-  }
-
-  useEffect(() => {
-    init();
   }, []);
 
-  return (
-    <>
-      <div id="view">
-        <canvas ref={glCanvasRef} />
-        <canvas ref={shapeCanvasRef} />
-      </div>
-    </>
-  );
+  useEffect(() => { plotStatusRef.current = plotStatus; }, [plotStatus]);
+
+  return <canvas ref={canvasRef} />;
 }
 
 export default WebGLView;

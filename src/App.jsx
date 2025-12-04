@@ -50,11 +50,18 @@ function App() {
     requestAnimationFrame(render);
   }, []);
 
+  const displays = plotStatus.coefficients.map(coefficient => {
+    return `${coefficient[0].toFixed(2)} + ${coefficient[1].toFixed(2)}i`;
+  }).reverse();
+
   return (
     <>
       <div ref={divRef} id="view">
         <WebGLView plotStatus={plotStatus} />
         <InteractiveView plotStatus={plotStatus} />
+        <div className="info">
+          {displays.map((d, i) => <p key={i}>{d}</p>)}
+        </div>
       </div>
     </>
   );

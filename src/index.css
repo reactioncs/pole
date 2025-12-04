@@ -9,6 +9,15 @@ div#view {
   height: 100vh;
 }
 
+div#view .info {
+  position: absolute;
+}
+
+div#view .info p {
+  color: white;
+  font-size: 1.5em;
+  font-style: italic;
+}
 
 div#view canvas {
   position: absolute;

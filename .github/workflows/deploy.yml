@@ -40,14 +40,8 @@ jobs:
           # Copy index.html to root
           cp dist/index.html index.html
 
-          # Remove all files except .git
-          git rm -rf . || true
-
           # Clean untracked files and directories (including ignored ones)
           git clean -fdx
-
-          # Go back to get the built files
-          git checkout ${{ github.sha }} -- dist/index.html
 
           # Add and commit
           git add index.html

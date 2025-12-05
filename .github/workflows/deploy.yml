@@ -1,0 +1,57 @@
+name: Build and Deploy to Host Branch
+
+on:
+  # push:
+  #   branches:
+  #     - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build with Vite
+        run: bun run build
+
+      - name: Deploy to host branch
+        run: |
+          # Configure git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch the host branch
+          git fetch origin host:host || git checkout --orphan host
+
+          # Switch to host branch
+          git checkout host
+
+          # Copy index.html to root
+          cp dist/index.html index.html
+
+          # Remove all files except .git
+          git rm -rf . || true
+
+          # Clean untracked files and directories (including ignored ones)
+          git clean -fdx
+
+          # Go back to get the built files
+          git checkout ${{ github.sha }} -- dist/index.html
+
+          # Add and commit
+          git add index.html
+          git commit -m "Deploy: Update index.html from ${{ github.sha }}" || echo "No changes to commit"
+
+          # Push to host branch
+          git push origin host

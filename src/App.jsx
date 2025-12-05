@@ -9,9 +9,9 @@ function App() {
     x2Min: -1.0,
     x2Max: 1.0,
     coefficients: [
-      [0.0, 0.0],
-      [0.0, 0.0],
-      [0.0, 0.0],
+      [0.0, -1.0],
+      [-1.0, 0.0],
+      [0.0, 1.0],
       [1.0, 0.0],
     ],
   });
@@ -37,28 +37,30 @@ function App() {
     });
     observer.observe(divRef.current);
 
-    const coefficients = plotStatus.coefficients;
-
-    function render(time) {
-      coefficients[0][0] = Math.cos(time * 0.0015) * 1.0;
-      coefficients[0][1] = Math.sin(time * 0.0015) * 1.0;
-      coefficients[1][0] = Math.cos(-time * 0.002) * 0.6;
-      coefficients[1][1] = Math.sin(-time * 0.002) * 0.6;
-      setPlotStatus(s => ({ ...s, coefficients, }));
-      requestAnimationFrame(render);
-    }
-    requestAnimationFrame(render);
+    // const coefficients = plotStatus.coefficients;
+    // function render(time) {
+    //   coefficients[0][0] = Math.cos(time * 0.0015) * 1.0;
+    //   coefficients[0][1] = Math.sin(time * 0.0015) * 1.0;
+    //   coefficients[1][0] = Math.cos(-time * 0.002) * 0.6;
+    //   coefficients[1][1] = Math.sin(-time * 0.002) * 0.6;
+    //   setPlotStatus(s => ({ ...s, coefficients, }));
+    //   requestAnimationFrame(render);
+    // }
+    // requestAnimationFrame(render);
   }, []);
 
-  const displays = plotStatus.coefficients.map(coefficient => {
-    return `${coefficient[0].toFixed(2)} + ${coefficient[1].toFixed(2)}i`;
+  const displays = plotStatus.coefficients.map((coefficient, i) => {
+    const re = coefficient[0];
+    const im = coefficient[1];
+    const name = String.fromCharCode(plotStatus.coefficients.length - i - 1 + 97);
+    return `${name} = ${re.toFixed(2)} ${im > 0 ? "+" : "-"} ${Math.abs(im).toFixed(2)}i`;
   }).reverse();
 
   return (
     <>
       <div ref={divRef} id="view">
         <WebGLView plotStatus={plotStatus} />
-        <InteractiveView plotStatus={plotStatus} />
+        <InteractiveView plotStatus={plotStatus} setPlotStatus={setPlotStatus} />
         <div className="info">
           {displays.map((d, i) => <p key={i}>{d}</p>)}
         </div>

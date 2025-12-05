@@ -49,12 +49,30 @@ function App() {
     // requestAnimationFrame(render);
   }, []);
 
+  function resetCoefficients() {
+    if (!divRef.current) throw new Error();
+    const div = divRef.current;
+
+    setPlotStatus({
+      x1Min: -div.clientWidth / 500.0,
+      x1Max: div.clientWidth / 500.0,
+      x2Min: -div.clientHeight / 500.0,
+      x2Max: div.clientHeight / 500.0,
+      coefficients: [
+        [0.0, -1.0],
+        [-1.0, 0.0],
+        [0.0, 1.0],
+        [1.0, 0.0],
+      ],
+    });
+  }
+
   const displays = plotStatus.coefficients.map((coefficient, i) => {
     const re = coefficient[0];
     const im = coefficient[1];
     const name = String.fromCharCode(plotStatus.coefficients.length - i - 1 + 97);
     return `${name} = ${re.toFixed(2)} ${im > 0 ? "+" : "-"} ${Math.abs(im).toFixed(2)}i`;
-  }).reverse();
+  });
 
   return (
     <>
@@ -62,7 +80,8 @@ function App() {
         <WebGLView plotStatus={plotStatus} />
         <InteractiveView plotStatus={plotStatus} setPlotStatus={setPlotStatus} />
         <div className="info">
-          {displays.map((d, i) => <p key={i}>{d}</p>)}
+          <button onClick={resetCoefficients}>reset coefficients</button>
+          {displays.map((d, i) => <p key={i}>{d}</p>).reverse()}
         </div>
       </div>
     </>

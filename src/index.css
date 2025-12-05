@@ -21,12 +21,23 @@ div#view .info p {
   font-style: italic;
 }
 
+div#view .info button {
+  background-color: transparent;
+  border: 2px solid rgb(209, 213, 219);
+  border-radius: 1.5rem;
+  color: rgb(209, 213, 219);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  margin: 0 0 0.5em 0;
+}
+
+div#view .info button:hover {
+  background-color: #ffffff18;
+}
+
 div#view canvas {
   position: absolute;
   width: 100%;
   height: 100%;
-}
-
-div#view canvas.point {
-  cursor: pointer;
 }

@@ -37,7 +37,7 @@ function WebGLView({ plotStatus }) {
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
     // Now create an array of positions for the square.
-    const positions = [1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, -1.0];
+    const positions = [1.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0];
 
     // Now pass the list of positions into WebGL to build the
     // shape. We do this by creating a Float32Array from the
@@ -90,8 +90,8 @@ function WebGLView({ plotStatus }) {
     mat4.ortho(projectionMatrix, plotStatus.x1Min, plotStatus.x1Max, plotStatus.x2Min, plotStatus.x2Max, -1.0, 1.0);
 
     const modelViewMatrix = mat4.create();
+    mat4.translate(modelViewMatrix, modelViewMatrix, [-(plotStatus.x1Max - plotStatus.x1Min) / 2, -(plotStatus.x2Max - plotStatus.x2Min) / 2, 0.0]);
     mat4.scale(modelViewMatrix, modelViewMatrix, [plotStatus.x1Max - plotStatus.x1Min, plotStatus.x2Max - plotStatus.x2Min, 1.0]);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [(plotStatus.x1Max - plotStatus.x1Min) / 2, (plotStatus.x1Max - plotStatus.x1Min) / 2, 0.0]);
 
     setPositionAttribute(gl, buffers, programInfo);
 

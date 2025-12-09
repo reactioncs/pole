@@ -56,8 +56,7 @@ void main() {
 
     vec2 xi = vec2(1.0);
     vec2 y = vec2(0.0);
-    for (int i = 0; i < uCoefficients.length(); i++)
-    {
+    for (int i = 0; i < uCoefficients.length(); i++) {
         y += complexMultiply(uCoefficients[i], xi);
         xi = complexMultiply(xi, x);
     }

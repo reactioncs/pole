@@ -84,6 +84,12 @@ function App() {
           {displays.map((d, i) => <p key={i}>{d}</p>).reverse()}
         </div>
       </div>
+      <footer>
+        <p>link to</p>
+        <p><a target="_blank" href="https://www.youtube.com/watch?v=9HIy5dJE-zQ">orignal video</a></p>
+        <p>|</p>
+        <p><a target="_blank" href="https://github.com/reactioncs/pole">github page</a></p>
+      </footer>
     </>
   );
 }

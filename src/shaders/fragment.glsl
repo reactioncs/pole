@@ -5,14 +5,9 @@ const float PI = 3.14159265358;
 
 in highp vec2 vTextureCoord;
 
-out highp vec4 fragColor;
-
-uniform float uX1Min;
-uniform float uX1Max;
-uniform float uX2Min;
-uniform float uX2Max;
-
 uniform vec2 uCoefficients[4];
+
+out highp vec4 fragColor;
 
 // Helper function for hue2rgb
 float hue2rgb(float p, float q, float t) {
@@ -49,10 +44,7 @@ vec2 complexMultiply(vec2 u, vec2 v) {
 }
 
 void main() {
-    vec2 x = vec2(
-        ((uX1Max - uX1Min) * vTextureCoord.x + uX1Min + uX1Max) / 2.0, 
-        ((uX2Max - uX2Min) * vTextureCoord.y + uX2Min + uX2Max) / 2.0
-    );
+    vec2 x = vTextureCoord;
 
     vec2 xi = vec2(1.0);
     vec2 y = vec2(0.0);

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 
+import { mat4 } from "gl-matrix";
 import { initShaderProgram } from "./glHelper";
 import vsSource from "./shaders/vertex.glsl?raw";
 import fsSource from "./shaders/fragment.glsl?raw";
@@ -85,15 +86,29 @@ function WebGLView({ plotStatus }) {
     // Clear the canvas before we start drawing on it.
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    const projectionMatrix = mat4.create();
+    mat4.ortho(projectionMatrix, plotStatus.x1Min, plotStatus.x1Max, plotStatus.x2Min, plotStatus.x2Max, -1.0, 1.0);
+
+    const modelViewMatrix = mat4.create();
+    mat4.scale(modelViewMatrix, modelViewMatrix, [plotStatus.x1Max - plotStatus.x1Min, plotStatus.x2Max - plotStatus.x2Min, 1.0]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [(plotStatus.x1Max - plotStatus.x1Min) / 2, (plotStatus.x1Max - plotStatus.x1Min) / 2, 0.0]);
+
     setPositionAttribute(gl, buffers, programInfo);
 
     // Tell WebGL to use our program when drawing
     gl.useProgram(programInfo.program);
 
-    gl.uniform1f(programInfo.uniforms.uX1Min, plotStatus.x1Min);
-    gl.uniform1f(programInfo.uniforms.uX1Max, plotStatus.x1Max);
-    gl.uniform1f(programInfo.uniforms.uX2Min, plotStatus.x2Min);
-    gl.uniform1f(programInfo.uniforms.uX2Max, plotStatus.x2Max);
+    // Set the shader uniforms
+    gl.uniformMatrix4fv(
+      programInfo.uniformLocations.projectionMatrix,
+      false,
+      projectionMatrix,
+    );
+    gl.uniformMatrix4fv(
+      programInfo.uniformLocations.modelViewMatrix,
+      false,
+      modelViewMatrix,
+    );
 
     gl.uniform2f(programInfo.uniforms.uCoefficients0, plotStatus.coefficients[0][0], plotStatus.coefficients[0][1]);
     gl.uniform2f(programInfo.uniforms.uCoefficients1, plotStatus.coefficients[1][0], plotStatus.coefficients[1][1]);
@@ -129,10 +144,6 @@ function WebGLView({ plotStatus }) {
         modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix"),
       },
       uniforms: {
-        uX1Min: gl.getUniformLocation(shaderProgram, "uX1Min"),
-        uX1Max: gl.getUniformLocation(shaderProgram, "uX1Max"),
-        uX2Min: gl.getUniformLocation(shaderProgram, "uX2Min"),
-        uX2Max: gl.getUniformLocation(shaderProgram, "uX2Max"),
         uCoefficients0: gl.getUniformLocation(shaderProgram, "uCoefficients[0]"),
         uCoefficients1: gl.getUniformLocation(shaderProgram, "uCoefficients[1]"),
         uCoefficients2: gl.getUniformLocation(shaderProgram, "uCoefficients[2]"),

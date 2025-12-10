@@ -8,6 +8,7 @@ import fsSource from "./shaders/fragment.glsl?raw";
 function WebGLView({ plotStatus }) {
   const plotStatusRef = useRef(plotStatus);
 
+  /** @type {React.RefObject<CanvasRenderingContext2D>} */
   const canvasRef = useRef(null);
   const glObjectsRef = useRef(null);
 
@@ -38,8 +39,8 @@ function WebGLView({ plotStatus }) {
 
     // Now create an array of positions for the square.
     const positions = [
-      1.0, 1.0, 0.0, 1.0, 1.0, 0.0,
-      0.0, 1.0, 1.0, 0.0, 0.0, 0.0
+      0.5, 0.5, -0.5, 0.5, 0.5, -0.5,
+      -0.5, 0.5, 0.5, -0.5, -0.5, -0.5
     ];
 
     // Now pass the list of positions into WebGL to build the
@@ -73,13 +74,16 @@ function WebGLView({ plotStatus }) {
 
   function draw() {
     if (!glObjectsRef.current) throw new Error();
+    /** @type {WebGL2RenderingContext} */
     const gl = glObjectsRef.current.gl;
     const programInfo = glObjectsRef.current.programInfo;
     const buffers = glObjectsRef.current.buffers;
 
     const plotStatus = plotStatusRef.current;
+    const canvasWidth = gl.canvas.width;
+    const canvasHeight = gl.canvas.height;
 
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    gl.viewport(0, 0, canvasWidth, canvasHeight);
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
     gl.clearDepth(1.0); // Clear everything
@@ -90,11 +94,19 @@ function WebGLView({ plotStatus }) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const projectionMatrix = mat4.create();
-    mat4.ortho(projectionMatrix, plotStatus.x1Min, plotStatus.x1Max, plotStatus.x2Min, plotStatus.x2Max, -1.0, 1.0);
+    mat4.ortho(
+      projectionMatrix,
+      plotStatus.centerX - canvasWidth / plotStatus.scale / 2,
+      plotStatus.centerX + canvasWidth / plotStatus.scale / 2,
+      plotStatus.centerY - canvasHeight / plotStatus.scale / 2,
+      plotStatus.centerY + canvasHeight / plotStatus.scale / 2,
+      -1.0,
+      1.0
+    );
 
     const modelViewMatrix = mat4.create();
-    mat4.translate(modelViewMatrix, modelViewMatrix, [-(plotStatus.x1Max - plotStatus.x1Min) / 2, -(plotStatus.x2Max - plotStatus.x2Min) / 2, 0.0]);
-    mat4.scale(modelViewMatrix, modelViewMatrix, [plotStatus.x1Max - plotStatus.x1Min, plotStatus.x2Max - plotStatus.x2Min, 1.0]);
+    mat4.translate(modelViewMatrix, modelViewMatrix, [plotStatus.centerX, plotStatus.centerY, 0.0]);
+    mat4.scale(modelViewMatrix, modelViewMatrix, [canvasWidth / plotStatus.scale, canvasHeight / plotStatus.scale, 1.0]);
 
     setPositionAttribute(gl, buffers, programInfo);
 

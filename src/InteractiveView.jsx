@@ -5,7 +5,9 @@ const CIRCLE_RADIUS = 12;
 function InteractiveView({ plotStatus, setPlotStatus }) {
   const plotStatusRef = useRef(plotStatus);
 
+  /** @type {React.RefObject<HTMLCanvasElement>} */
   const canvasRef = useRef(null);
+  /** @type {React.RefObject<CanvasRenderingContext2D>} */
   const contextRef = useRef(null);
 
   function resize() {
@@ -37,18 +39,18 @@ function InteractiveView({ plotStatus, setPlotStatus }) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (let i = 0; i < plotStatus.coefficients.length; i++) {
-      const clientX = canvas.width / (plotStatus.x1Max - plotStatus.x1Min) * (plotStatus.coefficients[i][0] - plotStatus.x1Min);
-      const clientY = canvas.height / (plotStatus.x2Min - plotStatus.x2Max) * (plotStatus.coefficients[i][1] - plotStatus.x2Max);
+      const canvasX = (plotStatus.coefficients[i][0] - plotStatus.centerX + canvas.width / plotStatus.scale / 2) * plotStatus.scale;
+      const canvasY = (plotStatus.centerY + canvas.height / plotStatus.scale / 2 - plotStatus.coefficients[i][1]) * plotStatus.scale;
 
       ctx.lineWidth = 3;
       ctx.strokeStyle = "white";
       ctx.beginPath();
-      ctx.arc(clientX, clientY, CIRCLE_RADIUS, 0, 2 * Math.PI);
+      ctx.arc(canvasX, canvasY, CIRCLE_RADIUS, 0, 2 * Math.PI);
       ctx.stroke();
 
       ctx.font = "italic 35px Times New Roman, Serif";
       ctx.fillStyle = "white";
-      ctx.fillText(String.fromCharCode(plotStatus.coefficients.length - i - 1 + 97), clientX - 8, clientY + 45);
+      ctx.fillText(String.fromCharCode(plotStatus.coefficients.length - i - 1 + 97), canvasX - 8, canvasY + 45);
     }
   }
 
@@ -80,10 +82,10 @@ function InteractiveView({ plotStatus, setPlotStatus }) {
 
     setActivePoint(null);
     for (let i = 0; i < plotStatus.coefficients.length; i++) {
-      const clientX = canvas.width / (plotStatus.x1Max - plotStatus.x1Min) * (plotStatus.coefficients[i][0] - plotStatus.x1Min);
-      const clientY = canvas.height / (plotStatus.x2Min - plotStatus.x2Max) * (plotStatus.coefficients[i][1] - plotStatus.x2Max);
-      const dx = e.clientX / canvas.clientWidth * canvas.width - clientX;
-      const dy = e.clientY / canvas.clientHeight * canvas.height - clientY;
+      const canvasX = (plotStatus.coefficients[i][0] - plotStatus.centerX + canvas.width / plotStatus.scale / 2) * plotStatus.scale;
+      const canvasY = (plotStatus.centerY + canvas.height / plotStatus.scale / 2 - plotStatus.coefficients[i][1]) * plotStatus.scale;
+      const dx = e.clientX / canvas.clientWidth * canvas.width - canvasX;
+      const dy = e.clientY / canvas.clientHeight * canvas.height - canvasY;
       if (dx * dx + dy * dy < CIRCLE_RADIUS * CIRCLE_RADIUS) {
         setActivePoint(i);
         return i;
@@ -108,8 +110,10 @@ function InteractiveView({ plotStatus, setPlotStatus }) {
     e.preventDefault();
     if (activePoint !== null && isMouseDown) {
       const canvas = canvasRef.current;
-      const x = e.clientX / canvas.clientWidth * (plotStatus.x1Max - plotStatus.x1Min) + plotStatus.x1Min;
-      const y = e.clientY / canvas.clientHeight * (plotStatus.x2Min - plotStatus.x2Max) + plotStatus.x2Max;
+      const canvasX = e.clientX / canvas.clientWidth * canvas.width;
+      const canvasY = e.clientY / canvas.clientHeight * canvas.height;
+      const x = canvasX / plotStatus.scale + plotStatus.centerX - canvas.width / plotStatus.scale / 2;
+      const y = plotStatus.centerY + canvas.height / plotStatus.scale / 2 - canvasY / plotStatus.scale;
       setPlotStatus(s => {
         s.coefficients[activePoint][0] = x;
         s.coefficients[activePoint][1] = y;
